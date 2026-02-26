@@ -48,8 +48,7 @@ echo ""
 echo -e "${BLUE}Test 1: New repo (init.defaultBranch=main)${NC}"
 TEST_DIR=$(mktemp -d)
 cd "$TEST_DIR"
-git config --local init.defaultBranch main
-git init > /dev/null 2>&1
+git init -b main > /dev/null 2>&1
 bash "$SETUP_SCRIPT" > /dev/null 2>&1 << INPUT
 main
 develop
@@ -70,8 +69,7 @@ echo ""
 echo -e "${BLUE}Test 2: New repo (init.defaultBranch=master)${NC}"
 TEST_DIR=$(mktemp -d)
 cd "$TEST_DIR"
-git config --local init.defaultBranch master
-git init > /dev/null 2>&1
+git init -b master > /dev/null 2>&1
 bash "$SETUP_SCRIPT" > /dev/null 2>&1 << INPUT
 main
 develop
@@ -97,8 +95,7 @@ echo ""
 echo -e "${BLUE}Test 3: Custom branch names (.gitflow config)${NC}"
 TEST_DIR=$(mktemp -d)
 cd "$TEST_DIR"
-git config --local init.defaultBranch main
-git init > /dev/null 2>&1
+git init -b main > /dev/null 2>&1
 # Setup with custom names
 bash "$SETUP_SCRIPT" > /dev/null 2>&1 << INPUT
 main
