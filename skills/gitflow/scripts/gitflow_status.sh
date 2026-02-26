@@ -37,12 +37,21 @@ if ! git rev-parse --git-dir > /dev/null 2>&1; then
     exit 1
 fi
 
+# Check for unborn HEAD (no commits yet)
+if ! git rev-parse --quiet --verify HEAD >/dev/null 2>&1; then
+    print_color "$RED" "Error: No commits found (unborn HEAD)"
+    print_color "$YELLOW" "  Please create an initial commit first"
+    echo ""
+    print_color "$CYAN" "Suggestion: Run 'git add . && git commit -m \"Initial commit\"'"
+    exit 1
+fi
+
 # Get current branch
 CURRENT=$(git rev-parse --abbrev-ref HEAD)
 
 # Get config values
-DEV_BRANCH=$(get_config "branch" "develop" "develop")
 PROD_BRANCH=$(get_config "branch" "master" "main")
+DEV_BRANCH=$(get_config "branch" "develop" "develop")
 FEATURE_PREFIX=$(get_config "prefix" "feature" "feature/")
 RELEASE_PREFIX=$(get_config "prefix" "release" "release/")
 HOTFIX_PREFIX=$(get_config "prefix" "hotfix" "hotfix/")
@@ -78,7 +87,7 @@ if git show-ref --verify --quiet "refs/heads/$PROD_BRANCH" 2>/dev/null; then
     PROD_COMMIT=$(git log -1 --pretty=format:"%h - %s" "$PROD_BRANCH" 2>/dev/null || echo "N/A")
     echo "  $PROD_BRANCH: $PROD_COMMIT"
 else
-    print_color "$YELLOW" "  $PROD_BRANCH: (not found - initialize with: git checkout -b $DEV_BRANCH)"
+    print_color "$YELLOW" "  $PROD_BRANCH: (not found)"
 fi
 
 if git show-ref --verify --quiet "refs/heads/$DEV_BRANCH" 2>/dev/null; then
