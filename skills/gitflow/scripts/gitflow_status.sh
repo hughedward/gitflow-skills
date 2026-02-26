@@ -37,10 +37,20 @@ if ! git rev-parse --git-dir > /dev/null 2>&1; then
     exit 1
 fi
 
+# Check for unborn HEAD (no commits yet)
+if ! git rev-parse --quiet --verify HEAD >/dev/null 2>&1; then
+    print_color "$RED" "Error: No commits found (unborn HEAD)"
+    print_color "$YELLOW" "  Please create an initial commit first"
+    echo ""
+    print_color "$CYAN" "Suggestion: Run 'git add . && git commit -m \"Initial commit\"'"
+    exit 1
+fi
+
 # Get current branch
 CURRENT=$(git rev-parse --abbrev-ref HEAD)
 
 # Get config values
+PROD_BRANCH=$(get_config "branch" "master" "main")
 DEV_BRANCH=$(get_config "branch" "develop" "develop")
 FEATURE_PREFIX=$(get_config "prefix" "feature" "feature/")
 RELEASE_PREFIX=$(get_config "prefix" "release" "release/")
@@ -57,7 +67,7 @@ echo ""
 print_color "$CYAN" "Current Branch:"
 if [[ "$CURRENT" == "$DEV_BRANCH" ]]; then
     print_color "$GREEN" "  ➤ $CURRENT (development)"
-elif [[ "$CURRENT" == "main" ]] || [[ "$CURRENT" == "master" ]]; then
+elif [[ "$CURRENT" == "$PROD_BRANCH" ]]; then
     print_color "$YELLOW" "  ➤ $CURRENT (production)"
 elif [[ "$CURRENT" == ${FEATURE_PREFIX}* ]]; then
     print_color "$CYAN" "  ➤ $CURRENT (feature)"
@@ -73,14 +83,11 @@ echo ""
 # Main branches
 print_color "$CYAN" "Main Branches:"
 
-if git show-ref --verify --quiet refs/heads/main 2>/dev/null; then
-    MAIN_COMMIT=$(git log -1 --pretty=format:"%h - %s" main 2>/dev/null || echo "N/A")
-    echo "  main/master: $MAIN_COMMIT"
-elif git show-ref --verify --quiet refs/heads/master 2>/dev/null; then
-    MASTER_COMMIT=$(git log -1 --pretty=format:"%h - %s" master 2>/dev/null || echo "N/A")
-    echo "  master: $MASTER_COMMIT"
+if git show-ref --verify --quiet "refs/heads/$PROD_BRANCH" 2>/dev/null; then
+    PROD_COMMIT=$(git log -1 --pretty=format:"%h - %s" "$PROD_BRANCH" 2>/dev/null || echo "N/A")
+    echo "  $PROD_BRANCH: $PROD_COMMIT"
 else
-    print_color "$YELLOW" "  main/master: (not found - initialize with: git checkout -b $DEV_BRANCH)"
+    print_color "$YELLOW" "  $PROD_BRANCH: (not found)"
 fi
 
 if git show-ref --verify --quiet "refs/heads/$DEV_BRANCH" 2>/dev/null; then
