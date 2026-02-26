@@ -1,11 +1,41 @@
 ---
 name: gitflow
-description: "Git Flow branching model workflow automation for creating features, managing releases, handling hotfixes, repository setup, and branch merging with --no-ff flag"
+description: "Git Flow branching model - a philosophy for versioned releases, implemented with pure git commands (no tools required)"
 ---
 
 # Git Flow
 
-Git Flow is a branching model for projects with explicit versioned releases and scheduled delivery cycles.
+> **Note on Branch Names**: Examples use default Git Flow naming (`main`, `develop`, `feature/*`, `release/*`, `hotfix/*`).
+> If your `.gitflow` config uses custom names (e.g., `dev` instead of `develop`), substitute accordingly.
+
+## Philosophy: Branching Model, NOT a Tool
+
+Git Flow is a **branching strategy protocol** - a set of conventions for how to organize your branches. It is NOT dependent on any specific tool.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Git Flow 理念  →  用原生 git实现  ✓                      │
+│  Git Flow 工具  →  可选，非必须  (optional)              │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Core Branch Structure
+
+| Branch | Purpose | Lifetime |
+|--------|---------|----------|
+| `main`/`master` | Production-ready code | Indefinite |
+| `develop` | Integration branch for features | Indefinite |
+| `feature/*` | Develop new features | Short-term |
+| `release/*` | Prepare production release | Short-term |
+| `hotfix/*` | Fix critical production bugs | Short-term |
+
+### Why Pure Git?
+
+The git-flow-avh CLI tool is just a wrapper around native git commands. Understanding the underlying git commands gives you:
+- **No dependencies** - works anywhere git is installed
+- **Full control** - understand and customize each operation
+- **Debugging** - know exactly what's happening
+- **Portability** - not tied to a specific tool
 
 ## Quick Start
 
@@ -28,23 +58,36 @@ Need to work on Git Flow repository?
 
 Set up a new repository with Git Flow branches:
 
+### Pure Git Method (Recommended)
+
 ```bash
-# Initialize Git Flow (default branch names: main/master, develop)
-git flow init
+# 1. Ensure you're on main/master
+git checkout main
 
-# Or with custom branch names
-git flow init -d
+# 2. Create develop branch from main
+git checkout -b develop
 
-# Answer prompts for branch names:
-# - Production branch: main (or master)
-# - Development branch: develop
-# - Feature branch prefix: feature/
-# - Release branch prefix: release/
-# - Hotfix branch prefix: hotfix/
-# - Support branch prefix: support/ (optional)
+# 3. Push both branches to remote
+git push -u origin main
+git push -u origin develop
 ```
 
-**After initialization, you will be on the `develop` branch.**
+### Using Helper Script
+
+```bash
+bash scripts/setup_gitflow.sh
+```
+
+### Optional: git-flow-avh Tool
+
+If you have git-flow-avh installed:
+
+```bash
+git flow init      # Interactive setup
+git flow init -d   # Use defaults
+```
+
+**After initialization, you should be on the `develop` branch.**
 
 ## Feature Workflow
 
@@ -52,50 +95,53 @@ Use feature branches for developing new features for upcoming releases.
 
 ### Start a Feature
 
-```bash
-# Start a new feature (creates and checks out feature/<name>)
-git flow feature start <feature-name>
+| Pure Git | git-flow Tool (Optional) |
+|----------|--------------------------|
+| ```bash<br>git checkout develop<br>git checkout -b feature/<name><br>``` | ```bash<br>git flow feature start <name><br>``` |
 
-# Example
-git flow feature start user-authentication
+**Example (Pure Git):**
+```bash
+git checkout develop
+git checkout -b feature/user-authentication
 ```
 
 This creates `feature/user-authentication` from `develop`.
 
 ### Finish a Feature
 
-```bash
-# Finish feature (merges to develop, deletes feature branch)
-git flow feature finish <feature-name>
+| Pure Git | git-flow Tool (Optional) |
+|----------|--------------------------|
+| ```bash<br>git checkout develop<br>git merge --no-ff feature/<name><br>git branch -d feature/<name><br>``` | ```bash<br>git flow feature finish <name><br>``` |
 
-# Example
-git flow feature finish user-authentication
+**Example (Pure Git):**
+```bash
+git checkout develop
+git merge --no-ff feature/user-authentication
+git branch -d feature/user-authentication
 ```
 
 This:
 - Merges `feature/user-authentication` to `develop` using `--no-ff`
-- Tags the merge (optional, configurable)
 - Deletes the feature branch
 - Switches back to `develop`
 
+**Note:** `--no-ff` (no fast-forward) preserves feature history in the graph.
+
 ### Publish a Feature (Team Collaboration)
 
+| Pure Git | git-flow Tool (Optional) |
+|----------|--------------------------|
+| ```bash<br>git push -u origin feature/<name><br>``` | ```bash<br>git flow feature publish <name><br>``` |
+
+**Checkout remote feature:**
 ```bash
-# Publish feature to remote
-git flow feature publish <feature-name>
-
-# Checkout feature from remote
-git flow feature checkout <feature-name>
-
-# Pull latest changes
-git flow feature pull origin <feature-name>
+git fetch origin
+git checkout feature/<name>
 ```
 
-### Track a Feature
-
+**Pull latest changes:**
 ```bash
-# Track a remote feature branch
-git flow feature track <feature-name>
+git pull origin feature/<name>
 ```
 
 ## Release Workflow
@@ -104,12 +150,14 @@ Use release branches when preparing for a new production release. This allows bu
 
 ### Start a Release
 
-```bash
-# Start a release (creates from develop)
-git flow release start <version>
+| Pure Git | git-flow Tool (Optional) |
+|----------|--------------------------|
+| ```bash<br>git checkout develop<br>git checkout -b release/<version><br>``` | ```bash<br>git flow release start <version><br>``` |
 
-# Example
-git flow release start 1.2.0
+**Example (Pure Git):**
+```bash
+git checkout develop
+git checkout -b release/1.2.0
 ```
 
 This creates `release/1.2.0` from `develop`.
@@ -117,24 +165,28 @@ This creates `release/1.2.0` from `develop`.
 ### Publish a Release
 
 ```bash
-# Publish release to remote (allows team collaboration)
-git flow release publish <version>
-
-# Example
-git flow release publish 1.2.0
+git push -u origin release/<version>
 ```
 
 ### Finish a Release
 
+| Pure Git | git-flow Tool (Optional) |
+|----------|--------------------------|
+| ```bash<br># Merge to main and tag<br>git checkout main<br>git merge --no-ff release/<version><br>git tag -a <version> -m "Release <version>"<br><br># Merge back to develop<br>git checkout develop<br>git merge --no-ff release/<version><br><br># Cleanup<br>git branch -d release/<version><br>``` | ```bash<br>git flow release finish <version><br>``` |
+
+**Example (Pure Git):**
 ```bash
-# Finish release (merges to main AND develop, tags, cleanup)
-git flow release finish <version>
+# Merge to main and tag
+git checkout main
+git merge --no-ff release/1.2.0
+git tag -a 1.2.0 -m "Release version 1.2.0"
 
-# Example with message
-git flow release finish 1.2.0 -m "Release version 1.2.0"
+# Merge back to develop
+git checkout develop
+git merge --no-ff release/1.2.0
 
-# Finish without signing tag
-git flow release finish 1.2.0 -n
+# Cleanup
+git branch -d release/1.2.0
 ```
 
 This:
@@ -144,30 +196,50 @@ This:
 - Deletes the release branch
 - Switches back to `develop`
 
+**Push tags to remote:**
+```bash
+git push origin main
+git push origin develop
+git push origin <version>  # Push the tag
+```
+
 ## Hotfix Workflow
 
 Use hotfix branches to fix critical production bugs immediately.
 
 ### Start a Hotfix
 
-```bash
-# Start a hotfix (creates from main/master)
-git flow hotfix start <version>
+| Pure Git | git-flow Tool (Optional) |
+|----------|--------------------------|
+| ```bash<br>git checkout main<br>git checkout -b hotfix/<version><br>``` | ```bash<br>git flow hotfix start <version><br>``` |
 
-# Example
-git flow hotfix start 1.2.1
+**Example (Pure Git):**
+```bash
+git checkout main
+git checkout -b hotfix/1.2.1
 ```
 
 This creates `hotfix/1.2.1` from `main/master`.
 
 ### Finish a Hotfix
 
-```bash
-# Finish hotfix (merges to main AND develop, tags, cleanup)
-git flow hotfix finish <version>
+| Pure Git | git-flow Tool (Optional) |
+|----------|--------------------------|
+| ```bash<br># Merge to main and tag<br>git checkout main<br>git merge --no-ff hotfix/<version><br>git tag -a <version> -m "Hotfix <version>"<br><br># Merge back to develop<br>git checkout develop<br>git merge --no-ff hotfix/<version><br><br># Cleanup<br>git branch -d hotfix/<version><br>``` | ```bash<br>git flow hotfix finish <version><br>``` |
 
-# Example with message
-git flow hotfix finish 1.2.1 -m "Hotfix: Fix critical login bug"
+**Example (Pure Git):**
+```bash
+# Merge to main and tag
+git checkout main
+git merge --no-ff hotfix/1.2.1
+git tag -a 1.2.1 -m "Hotfix: Fix critical login bug"
+
+# Merge back to develop
+git checkout develop
+git merge --no-ff hotfix/1.2.1
+
+# Cleanup
+git branch -d hotfix/1.2.1
 ```
 
 This:
@@ -183,9 +255,11 @@ This:
 
 This skill includes helper scripts for common Git Flow operations:
 
-- `scripts/gitflow_helper.sh` - Comprehensive Git Flow helper with menu
-- `scripts/setup_gitflow.sh` - Initialize Git Flow repository
-- `scripts/gitflow_status.sh` - Show current Git Flow status
+**All scripts use pure git commands - no git-flow-avh dependency required.**
+
+- `scripts/gitflow_helper.sh` - Interactive menu for all Git Flow operations
+- `scripts/setup_gitflow.sh` - Initialize Git Flow repository (pure git)
+- `scripts/gitflow_status.sh` - Show current Git Flow status (pure git)
 
 **Usage:**
 
@@ -217,18 +291,45 @@ bash scripts/setup_gitflow.sh
 3. **Write descriptive commit messages** - explain what and why, not just how
 4. **Tag releases** - use semantic versioning (e.g., `1.2.0`)
 5. **Pull before starting** - ensure `develop` is up-to-date before starting features
-6. **Finish work properly** - always use `git flow feature finish` instead of manual merging
+6. **Understand the git commands** - the git-flow tool is optional; knowledge of pure git commands is universal
+
+## Quick Reference: Pure Git Commands
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         Git Flow: Pure Git Cheat Sheet                  │
+├─────────────────────────────────────────────────────────────────────────┤
+│ FEATURE START:   git checkout develop && git checkout -b feature/<name> │
+│ FEATURE FINISH:  git checkout develop && git merge --no-ff feature/<name│
+│                  && git branch -d feature/<name>                        │
+├─────────────────────────────────────────────────────────────────────────┤
+│ RELEASE START:   git checkout develop && git checkout -b release/<ver>  │
+│ RELEASE FINISH:  git checkout main && git merge --no-ff release/<ver>   │
+│                  && git tag -a <ver> -m "Release <ver>"                 │
+│                  && git checkout develop && git merge --no-ff release/<ver│
+│                  && git branch -d release/<ver>                         │
+├─────────────────────────────────────────────────────────────────────────┤
+│ HOTFIX START:    git checkout main && git checkout -b hotfix/<ver>      │
+│ HOTFIX FINISH:   git checkout main && git merge --no-ff hotfix/<ver>    │
+│                  && git tag -a <ver> -m "Hotfix <ver>"                  │
+│                  && git checkout develop && git merge --no-ff hotfix/<ver│
+│                  && git branch -d hotfix/<ver>                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
 ## Common Issues
 
-**Issue:** "Not a gitflow repository"
-- **Solution:** Run `git flow init` first
+**Issue:** "Not a gitflow repository" (when using git-flow tool)
+- **Solution:** Run `git flow init` first, or just create the branches manually with pure git
 
 **Issue:** Merge conflicts during finish
-- **Solution:** Resolve conflicts, then `git add` the files, commit, and retry
+- **Solution:** Resolve conflicts, then `git add` the files, `git commit` to complete the merge
 
 **Issue:** Feature branch name contains invalid characters
 - **Solution:** Use alphanumeric and hyphens only (e.g., `user-auth` not `user_auth`)
+
+**Issue:** develop branch doesn't exist
+- **Solution:** Create it from main: `git checkout main && git checkout -b develop`
 
 ## When NOT to Use Git Flow
 

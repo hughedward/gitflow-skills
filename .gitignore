@@ -29,3 +29,8 @@ $RECYCLE.BIN/
 
 # Skill package
 *.skill
+
+
+docs/
+
+archive/

@@ -17,6 +17,20 @@ print_color() {
     echo -e "${1}${2}${NC}"
 }
 
+# Read .gitflow config, fallback to default
+get_config() {
+    local section=$1
+    local key=$2
+    local default=$3
+
+    if [[ -f ".gitflow" ]]; then
+        local value=$(grep "^\[gitflow \"$section\"\]" -A 10 .gitflow 2>/dev/null | grep "^    $key =" | cut -d'=' -f2 | xargs)
+        echo "${value:-$default}"
+    else
+        echo "$default"
+    fi
+}
+
 # Check if in git repo
 if ! git rev-parse --git-dir > /dev/null 2>&1; then
     print_color "$RED" "Error: Not a git repository"
@@ -25,6 +39,12 @@ fi
 
 # Get current branch
 CURRENT=$(git rev-parse --abbrev-ref HEAD)
+
+# Get config values
+DEV_BRANCH=$(get_config "branch" "develop" "develop")
+FEATURE_PREFIX=$(get_config "prefix" "feature" "feature/")
+RELEASE_PREFIX=$(get_config "prefix" "release" "release/")
+HOTFIX_PREFIX=$(get_config "prefix" "hotfix" "hotfix/")
 
 # Header
 echo ""
@@ -35,15 +55,15 @@ echo ""
 
 # Current branch
 print_color "$CYAN" "Current Branch:"
-if [[ "$CURRENT" == "develop" ]]; then
+if [[ "$CURRENT" == "$DEV_BRANCH" ]]; then
     print_color "$GREEN" "  ➤ $CURRENT (development)"
 elif [[ "$CURRENT" == "main" ]] || [[ "$CURRENT" == "master" ]]; then
     print_color "$YELLOW" "  ➤ $CURRENT (production)"
-elif [[ "$CURRENT" == feature/* ]]; then
+elif [[ "$CURRENT" == ${FEATURE_PREFIX}* ]]; then
     print_color "$CYAN" "  ➤ $CURRENT (feature)"
-elif [[ "$CURRENT" == release/* ]]; then
+elif [[ "$CURRENT" == ${RELEASE_PREFIX}* ]]; then
     print_color "$CYAN" "  ➤ $CURRENT (release)"
-elif [[ "$CURRENT" == hotfix/* ]]; then
+elif [[ "$CURRENT" == ${HOTFIX_PREFIX}* ]]; then
     print_color "$RED" "  ➤ $CURRENT (hotfix)"
 else
     echo "  ➤ $CURRENT"
@@ -60,21 +80,21 @@ elif git show-ref --verify --quiet refs/heads/master 2>/dev/null; then
     MASTER_COMMIT=$(git log -1 --pretty=format:"%h - %s" master 2>/dev/null || echo "N/A")
     echo "  master: $MASTER_COMMIT"
 else
-    print_color "$YELLOW" "  main/master: (not found - run git flow init)"
+    print_color "$YELLOW" "  main/master: (not found - initialize with: git checkout -b $DEV_BRANCH)"
 fi
 
-if git show-ref --verify --quiet refs/heads/develop 2>/dev/null; then
-    DEV_COMMIT=$(git log -1 --pretty=format:"%h - %s" develop 2>/dev/null || echo "N/A")
-    echo "  develop: $DEV_COMMIT"
+if git show-ref --verify --quiet "refs/heads/$DEV_BRANCH" 2>/dev/null; then
+    DEV_COMMIT=$(git log -1 --pretty=format:"%h - %s" "$DEV_BRANCH" 2>/dev/null || echo "N/A")
+    echo "  $DEV_BRANCH: $DEV_COMMIT"
 else
-    print_color "$YELLOW" "  develop: (not found - run git flow init)"
+    print_color "$YELLOW" "  $DEV_BRANCH: (not found - initialize with: git checkout -b $DEV_BRANCH)"
 fi
 
 echo ""
 
 # Feature branches
 print_color "$CYAN" "Feature Branches:"
-FEATURES=$(git show-ref --heads | grep "refs/heads/feature/" || true)
+FEATURES=$(git show-ref --heads | grep "refs/heads/$FEATURE_PREFIX" || true)
 if [[ -n "$FEATURES" ]]; then
     echo "$FEATURES" | while read -r line; do
         branch=$(echo "$line" | sed 's|.*refs/heads/||')
@@ -90,7 +110,7 @@ echo ""
 
 # Release branches
 print_color "$CYAN" "Release Branches:"
-RELEASES=$(git show-ref --heads | grep "refs/heads/release/" || true)
+RELEASES=$(git show-ref --heads | grep "refs/heads/$RELEASE_PREFIX" || true)
 if [[ -n "$RELEASES" ]]; then
     echo "$RELEASES" | while read -r line; do
         branch=$(echo "$line" | sed 's|.*refs/heads/||')
@@ -106,7 +126,7 @@ echo ""
 
 # Hotfix branches
 print_color "$CYAN" "Hotfix Branches:"
-HOTFIXES=$(git show-ref --heads | grep "refs/heads/hotfix/" || true)
+HOTFIXES=$(git show-ref --heads | grep "refs/heads/$HOTFIX_PREFIX" || true)
 if [[ -n "$HOTFIXES" ]]; then
     echo "$HOTFIXES" | while read -r line; do
         branch=$(echo "$line" | sed 's|.*refs/heads/||')
