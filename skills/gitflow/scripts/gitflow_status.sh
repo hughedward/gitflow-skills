@@ -37,6 +37,15 @@ if ! git rev-parse --git-dir > /dev/null 2>&1; then
     exit 1
 fi
 
+# Check for unborn HEAD (no commits yet)
+if ! git rev-parse --quiet --verify HEAD >/dev/null 2>&1; then
+    print_color "$RED" "Error: No commits found (unborn HEAD)"
+    print_color "$YELLOW" "  Please create an initial commit first"
+    echo ""
+    print_color "$CYAN" "Suggestion: Run 'git add . && git commit -m \"Initial commit\"'"
+    exit 1
+fi
+
 # Get current branch
 CURRENT=$(git rev-parse --abbrev-ref HEAD)
 

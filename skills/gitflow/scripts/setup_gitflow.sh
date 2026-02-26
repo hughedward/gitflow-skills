@@ -123,15 +123,20 @@ echo ""
 if ! "$has_main" && ! "$has_dev_branch"; then
     # Create initial commit if needed
     if [[ -z "$(git ls-files)" ]]; then
-        # Create a placeholder README
-        echo "# Project" > README.md
-        git add README.md
+        if [[ ! -f README.md ]]; then
+            # No README exists, create placeholder
+            echo "# Project" > README.md
+            git add README.md
+        else
+            # README exists (untracked), add it as-is
+            git add README.md
+        fi
         git commit -m "Initial commit"
         echo -e "${GREEN}✓ Initial commit created${NC}"
     fi
 
     # Handle main/master branch - rename existing if needed
-    if git symbolic-ref --quiet HEAD 2>/dev/null; then
+    if git symbolic-ref --quiet HEAD >/dev/null 2>&1; then
         current_head=$(git symbolic-ref --short HEAD)
         if [[ "$current_head" != "$prod_branch" ]]; then
             git branch -m "$current_head" "$prod_branch"

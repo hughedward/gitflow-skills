@@ -48,8 +48,7 @@ echo ""
 echo -e "${BLUE}Test 1: New repo (init.defaultBranch=main)${NC}"
 TEST_DIR=$(mktemp -d)
 cd "$TEST_DIR"
-git config --local init.defaultBranch main
-git init > /dev/null 2>&1
+git init -b main > /dev/null 2>&1
 bash "$SETUP_SCRIPT" > /dev/null 2>&1 << INPUT
 main
 develop
@@ -70,8 +69,7 @@ echo ""
 echo -e "${BLUE}Test 2: New repo (init.defaultBranch=master)${NC}"
 TEST_DIR=$(mktemp -d)
 cd "$TEST_DIR"
-git config --local init.defaultBranch master
-git init > /dev/null 2>&1
+git init -b master > /dev/null 2>&1
 bash "$SETUP_SCRIPT" > /dev/null 2>&1 << INPUT
 main
 develop
@@ -97,8 +95,7 @@ echo ""
 echo -e "${BLUE}Test 3: Custom branch names (.gitflow config)${NC}"
 TEST_DIR=$(mktemp -d)
 cd "$TEST_DIR"
-git config --local init.defaultBranch main
-git init > /dev/null 2>&1
+git init -b main > /dev/null 2>&1
 # Setup with custom names
 bash "$SETUP_SCRIPT" > /dev/null 2>&1 << INPUT
 main
@@ -114,6 +111,46 @@ if grep -q "develop = dev" .gitflow && grep -q "feature = feat/" .gitflow; then
     bash "$STATUS_SCRIPT" | grep -q "dev" && print_result "pass" "Custom branch names recognized"
 else
     print_result "fail" "Custom .gitflow config not created"
+fi
+cleanup
+echo ""
+
+# Test 4: Empty repo with untracked README.md
+echo -e "${BLUE}Test 4: Empty repo with untracked README.md${NC}"
+TEST_DIR=$(mktemp -d)
+cd "$TEST_DIR"
+git init > /dev/null 2>&1
+echo "# My Custom README" > README.md
+bash "$SETUP_SCRIPT" > /dev/null 2>&1 << INPUT
+main
+develop
+feature/
+release/
+hotfix/
+y
+INPUT
+# Verify: should have valid HEAD and branches
+if git show-ref --verify --quiet refs/heads/main && git show-ref --verify --quiet refs/heads/develop; then
+    if [[ "$(git rev-parse --abbrev-ref HEAD)" == "develop" ]]; then
+        print_result "pass" "Empty repo with untracked README handled correctly"
+    else
+        print_result "fail" "HEAD not on develop branch"
+    fi
+else
+    print_result "fail" "Branches not created properly"
+fi
+cleanup
+echo ""
+
+# Test 5: gitflow_status.sh on empty repo
+echo -e "${BLUE}Test 5: gitflow_status.sh on empty repo${NC}"
+TEST_DIR=$(mktemp -d)
+cd "$TEST_DIR"
+git init > /dev/null 2>&1
+if bash "$STATUS_SCRIPT" 2>&1 | grep -q "No commits found"; then
+    print_result "pass" "gitflow_status.sh handles unborn HEAD gracefully"
+else
+    print_result "fail" "gitflow_status.sh should detect unborn HEAD"
 fi
 cleanup
 echo ""
