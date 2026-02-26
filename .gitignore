@@ -1,6 +1,7 @@
 # Claude Code
 .omc/
-.claude/
+.claude/sessions/
+.claude/tmp/
 
 # macOS
 .DS_Store
@@ -29,3 +30,8 @@ $RECYCLE.BIN/
 
 # Skill package
 *.skill
+
+
+docs/
+
+archive/
