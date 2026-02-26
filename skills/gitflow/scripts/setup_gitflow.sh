@@ -122,7 +122,7 @@ echo ""
 # Create branches if they don't exist
 if ! "$has_main" && ! "$has_dev_branch"; then
     # Create initial commit if needed
-    if [[ -z "$(git ls-files)" ]]; then
+    if [[ -z "$(git ls-files)" ]] && [[ ! -f README.md ]]; then
         # Create a placeholder README
         echo "# Project" > README.md
         git add README.md
@@ -187,8 +187,12 @@ echo -e "${BLUE}Next steps:${NC}"
 echo "  1. Create your first feature:"
 echo "     git checkout $dev_branch && git checkout -b ${feature_prefix}<name>"
 echo ""
-echo "  2. Or run the interactive helper:"
-echo "     bash scripts/gitflow_helper.sh"
+echo "  2. Or use the Git Flow skill in Claude Code:"
+echo "     Type '/gitflow' to get started"
+echo ""
+echo "     Common helper locations:"
+echo "       - bash ~/.claude/skills/gitflow/scripts/gitflow_helper.sh"
+echo "       - bash ~/.agents/skills/gitflow/scripts/gitflow_helper.sh"
 echo ""
 echo -e "${BLUE}Current branch:${NC} $dev_branch"
 echo ""
