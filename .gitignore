@@ -1,6 +1,7 @@
 # Claude Code
 .omc/
-.claude/
+.claude/sessions/
+.claude/tmp/
 
 # macOS
 .DS_Store
