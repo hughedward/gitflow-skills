@@ -1,7 +1,8 @@
 # GitFlow Skill 🦭
+<img width="738" height="295" alt="image" src="https://github.com/user-attachments/assets/0e2354f1-1cfa-408a-a358-4a105629e512" />
 
-[![License: MIT](https://img.shield.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Git](https://img.shield.io/badge/Git-2.0%2B-red.svg)](https://git-scm.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Git](https://img.shields.io/badge/Git-2.0%2B-red.svg)](https://git-scm.com/)
 
 > **Git Flow Branching Model** — Implemented with pure Git, no additional tools required
 
